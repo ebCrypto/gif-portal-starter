@@ -5,10 +5,18 @@ import './App.css';
 // Constants
 const TWITTER_HANDLE = '_buildspace';
 const TWITTER_LINK = `https://twitter.com/${TWITTER_HANDLE}`;
+const TEST_GIFS = [
+	'https://media.giphy.com/media/26gsccje7r5WUrXsA/giphy.gif',
+	'https://media.giphy.com/media/26gslLX5AA4mwZU7m/giphy.gif',
+	'https://media.giphy.com/media/l3V0xeOhH2AjrSUak/giphy.gif',
+	'https://media.giphy.com/media/26gs6ASI0ExbUXq0g/giphy.gif'
+]
 
 const App = () => {
   // State
   const [walletAddress, setWalletAddress] = useState(null);
+  const [inputValue, setInputValue] = useState('');
+  const [gifList, setGifList] = useState([]);
 
   // Actions
   const checkIfWalletIsConnected = async () => {
@@ -46,6 +54,21 @@ const App = () => {
       setWalletAddress(response.publicKey.toString());
     }
   };
+  
+  const sendGif = async () => {
+    if (inputValue.length > 0) {
+      console.log('Gif link:', inputValue);
+      setGifList([...gifList, inputValue]);
+      setInputValue('');
+    } else {
+      console.log('Empty input. Try again.');
+    }
+  };
+  
+  const onInputChange = (event) => {
+    const { value } = event.target;
+    setInputValue(value);
+  };
 
   const renderNotConnectedContainer = () => (
     <button
@@ -55,7 +78,37 @@ const App = () => {
       Connect to Wallet
     </button>
   );
+  
+  const renderConnectedContainer = () => (
+    <div className="connected-container">
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          sendGif();
+        }}
+      >
+        <input
+          type="text"
+          placeholder="Enter gif link!"
+          value={inputValue}
+          onChange={onInputChange}
+        />
+        <button type="submit" className="cta-button submit-gif-button">
+          Submit
+        </button>
+      </form>
+      <div className="gif-grid">
+        {/* Map through gifList instead of TEST_GIFS */}
+        {gifList.map((gif) => (
+          <div className="gif-item" key={gif}>
+            <img src={gif} alt={gif} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 
+  
   // UseEffects
   useEffect(() => {
     const onLoad = async () => {
@@ -63,19 +116,30 @@ const App = () => {
     };
     window.addEventListener('load', onLoad);
     return () => window.removeEventListener('load', onLoad);
-  }, []);
+  }, []); 
+  
+  useEffect(() => {
+    if (walletAddress) {
+      console.log('Fetching GIF list...');
+      
+      // Call Solana program here.
+  
+      // Set state
+      setGifList(TEST_GIFS);
+    }
+  }, [walletAddress]);
 
   return (
     <div className="App">
-			{/* This was solely added for some styling fanciness */}
-			<div className={walletAddress ? 'authed-container' : 'container'}>
+      <div className="container">
         <div className="header-container">
           <p className="header">🖼 GIF Portal</p>
           <p className="sub-text">
             View your GIF collection in the metaverse ✨
           </p>
-          {/* Add the condition to show this only if we don't have a wallet address */}
           {!walletAddress && renderNotConnectedContainer()}
+          {/* We just need to add the inverse here! */}
+          {walletAddress && renderConnectedContainer()}
         </div>
         <div className="footer-container">
           <img alt="Twitter Logo" className="twitter-logo" src={twitterLogo} />
